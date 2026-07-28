@@ -323,6 +323,8 @@ html,body { width:100%; height:100%; background:var(--bg); color:var(--text); fo
     <div class="date-deco-line"></div>
   </div>
   <div class="concierge-note" data-i18n="concierge" style="z-index:2;">ご不明な点は、コンシェルジュまでお声がけください</div>
+  <!-- 隠し管理ボタン：右下角60x60px透明 -->
+  <div id="admin-secret-btn" style="position:absolute;bottom:0;right:0;width:60px;height:60px;z-index:999;cursor:pointer;" data-action="open-admin"></div>
 </div>
 
 <!-- COMPANY -->
@@ -531,6 +533,7 @@ document.addEventListener("click", function(e){
       s.purpose={ja:el.dataset.ja, en:el.dataset.en, zh:el.dataset.zh}; showWait(); break;
     case "go-company": go("idle"); break;
     case "go-home": clearTimeout(waitTimer); home(); break;
+    case "open-admin": openAdmin(); break;
     case "admin-save":
       localStorage.setItem("wh_2nd",document.getElementById("wh-2nd").value.trim());
       localStorage.setItem("wh_lux",document.getElementById("wh-lux").value.trim());
