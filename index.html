@@ -503,7 +503,7 @@ function sendWebhook(){
   log("["+ts+"] "+s.company+(s.purpose.ja?" / "+s.purpose.ja:"")+" → 送信中...");
   if(!wh){ log("⚠ Webhook未設定"); return; }
   fetch(wh,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:txt})})
-    .then(function(){ log("✅ 送信成功"); })
+   .then(function(r){ if(r.ok){ log("✅ 送信成功"); } else { r.text().then(function(t){ log("❌ "+r.status+" "+t.slice(0,200)); }); } })
     .catch(function(e){ log("❌ "+e.message); showToast(); });
 }
 
