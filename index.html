@@ -518,7 +518,7 @@ document.addEventListener("click", function(e){
     case "sel-2nd":
       s.company="2nd Village"; s.purpose={ja:"",en:"",zh:""}; go("purpose"); break;
     case "sel-lux":
-      s.company="LUX TOKYO"; s.purpose={ja:"",en:"",zh:""}; go("purpose"); break;
+          s.company="LUX TOKYO"; s.purpose={ja:"",en:"",zh:""}; showWait(); break;
     case "sel-purpose":
       s.purpose={ja:el.dataset.ja, en:el.dataset.en, zh:el.dataset.zh}; showWait(); break;
     case "go-company": go("idle"); break;
