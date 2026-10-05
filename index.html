@@ -397,16 +397,7 @@ html,body { width:100%; height:100%; background:var(--bg); color:var(--text); fo
 <div id="admin-modal">
   <div class="abox">
     <h2>⚙ 管理設定</h2>
-    <div>
-      <label class="alabel">Webhook URL（株式会社 2nd Village）</label>
-      <input class="ainput" id="wh-2nd" type="text" placeholder="https://chat.googleapis.com/v1/spaces/...">
-    </div>
-    <div>
-      <label class="alabel">Webhook URL（LUX TOKYO）</label>
-      <input class="ainput" id="wh-lux" type="text" placeholder="https://chat.googleapis.com/v1/spaces/...">
-    </div>
     <div class="abtns">
-      <button class="asave" data-action="admin-save">保存</button>
       <button class="acancel" data-action="admin-close">閉じる</button>
     </div>
     <div class="alog" id="alog">— 送信ログ —</div>
@@ -490,20 +481,19 @@ function showWait(){
 
 /* ── WEBHOOK ── */
 function sendWebhook(){
-  var wh2 = localStorage.getItem("wh_2nd")||"";
-  var whl = localStorage.getItem("wh_lux")||"";
-  var wh  = (s.company==="LUX TOKYO") ? whl : wh2;
-  var ts  = new Date().toLocaleString("ja-JP");
-  var txt;
-  if(s.company==="LUX TOKYO"){
-    txt = "\uD83D\uDD14 *LUX TOKYO \u6765\u5BA2\u901A\u77E5*\n\u65E5\u6642: "+ts;
-  } else {
-    txt = "\uD83D\uDD14 *\u53D7\u4ED8\u901A\u77E5*\n\u53D7\u4ED8\u5148: "+s.company+"\n\u7528\u4EF6: "+(s.purpose.ja||"")+"\n\u65E5\u6642: "+ts;
-  }
+  var ts = new Date().toLocaleString("ja-JP");
   log("["+ts+"] "+s.company+(s.purpose.ja?" / "+s.purpose.ja:"")+" → 送信中...");
-  if(!wh){ log("⚠ Webhook未設定"); return; }
-  fetch(wh,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:txt})})
-   .then(function(r){ if(r.ok){ log("✅ 送信成功"); } else { r.text().then(function(t){ log("❌ "+r.status+" "+t.slice(0,200)); }); } })
+  fetch("/api/notify",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({company:s.company, purpose:s.purpose.ja||""})
+  })
+    .then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(d){
+        if(r.ok && d.ok){ log("✅ 送信成功"); }
+        else { log("❌ "+r.status+" "+(d.status?("(Chat "+d.status+") "):"")+(d.error||"")); showToast(); }
+      });
+    })
     .catch(function(e){ log("❌ "+e.message); showToast(); });
 }
 
@@ -534,10 +524,6 @@ document.addEventListener("click", function(e){
     case "go-company": go("idle"); break;
     case "go-home": clearTimeout(waitTimer); home(); break;
     case "open-admin": openAdmin(); break;
-    case "admin-save":
-      localStorage.setItem("wh_2nd",document.getElementById("wh-2nd").value.trim());
-      localStorage.setItem("wh_lux",document.getElementById("wh-lux").value.trim());
-      log("✅ 設定保存"); closeAdmin(); break;
     case "admin-close": closeAdmin(); break;
   }
 });
@@ -575,8 +561,6 @@ document.addEventListener("click", function(e){
 
 /* ── ADMIN ── */
 function openAdmin(){
-  document.getElementById("wh-2nd").value=localStorage.getItem("wh_2nd")||"";
-  document.getElementById("wh-lux").value=localStorage.getItem("wh_lux")||"";
   document.getElementById("admin-modal").classList.add("open");
 }
 function closeAdmin(){ document.getElementById("admin-modal").classList.remove("open"); }
