@@ -35,7 +35,9 @@ module.exports = async (req, res) => {
   }
 
   const ts = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-   const text = "🔔 *受付通知*\n受付先: " + company + "\n用件: " + purpose + "\n日時: " + ts;
+     const text = company === "LUX TOKYO"
+    ? "🔔 *LUX TOKYO 来客通知*\n日時: " + ts
+    : "🔔 *受付通知*\n受付先: " + company + "\n用件: " + purpose + "\n日時: " + ts;
   try {
     const r = await fetch(url, {
       method: "POST",
