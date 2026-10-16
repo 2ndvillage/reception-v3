@@ -470,7 +470,7 @@ function showWait(){
   if(lbl){ badge.textContent=lbl; badge.style.display="block"; }
   else { badge.style.display="none"; }
   go("wait");
-  playBell();
+  try { new Audio("assets/announce.mp3").play().catch(function(){}); } catch(e){}
   sendWebhook();
   var bar=document.getElementById("w-bar");
   bar.style.transition="none"; bar.style.width="0%";
