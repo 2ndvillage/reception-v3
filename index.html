@@ -35,6 +35,7 @@ html,body { width:100%; height:100%; background:var(--bg); color:var(--text); fo
 /* SCREENS */
 .screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity var(--tr); padding:28px 36px; }
 .screen.active { opacity:1; pointer-events:all; }
+.screen:not(.active), .screen:not(.active) * { pointer-events:none !important; }
 
 /* IDLE */
 #s-idle {
@@ -289,12 +290,79 @@ html,body { width:100%; height:100%; background:var(--bg); color:var(--text); fo
   animation: clockColorShift 12s ease-in-out infinite;
 }
 
+/* ── WELCOME（受付の入口画面） ── */
+#s-welcome { display:block; position:fixed; padding:0; overflow:hidden; cursor:pointer; background:#0d1a13; color:#f5f0e8; }
+.wl-bg { position:absolute; inset:0; background:url("assets/bg.jpg") center/cover no-repeat; filter:blur(3px) brightness(0.55); transform:scale(1.04); }
+.wl-shade { position:absolute; inset:0; background:rgba(8,18,12,0.35); }
+.wl-top { position:absolute; top:32px; left:40px; right:40px; display:flex; justify-content:space-between; align-items:center; z-index:2; }
+.wl-logos { display:flex; align-items:center; gap:28px; }
+.wl-logos img { width:auto; filter:brightness(0) invert(1); pointer-events:none; }
+.wl-logo-2nd { height:60px; }
+.wl-logo-lux { height:28px; }
+.wl-sep { width:1px; height:28px; background:rgba(201,168,76,0.5); }
+#wclock { font-family:"Cormorant Garamond", Georgia, serif; font-size:34px; font-weight:300; letter-spacing:0.06em; color:rgba(245,240,232,0.9); }
+.wl-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; text-align:center; padding:min(13vh,110px) 24px min(15vh,120px); box-sizing:border-box; }
+.wl-sub { font-family:"Cormorant Garamond", Georgia, serif; font-size:min(18px,2.3vh); letter-spacing:0.6em; color:#c9a84c; margin-bottom:min(20px,2.4vh); }
+.wl-title { margin:0; font-family:var(--f-serif); font-weight:400; font-size:clamp(40px,min(6.9vw,11vh),88px); letter-spacing:0.14em; color:#f5f0e8; }
+.wl-welcome { margin-top:min(14px,1.6vh); font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(18px,min(2.4vw,3.8vh),30px); letter-spacing:0.2em; color:rgba(245,240,232,0.85); }
+.wl-line { width:220px; height:1px; background:rgba(201,168,76,0.7); margin:min(32px,3.6vh) 0 min(42px,4.8vh); }
+.wl-btnwrap { position:relative; display:flex; align-items:center; justify-content:center; }
+.wl-ring { position:absolute; inset:-10px; border:1px solid #c9a84c; border-radius:999px; animation:wlRing 2.4s ease-out infinite; pointer-events:none; }
+.wl-btn { display:flex; align-items:center; gap:18px; padding:min(28px,3.3vh) 72px; border-radius:999px; border:1px solid #c9a84c; background:rgba(201,168,76,0.16); color:#f5f0e8; font-family:var(--f-serif); font-size:clamp(22px,min(2.7vw,4.3vh),34px); letter-spacing:0.14em; cursor:pointer; }
+.wl-btn svg { animation:wlTap 1.6s ease-in-out infinite; }
+.wl-msg1 { margin-top:min(44px,5vh); font-size:clamp(15px,min(1.75vw,2.8vh),22px); letter-spacing:0.16em; color:rgba(245,240,232,0.92); }
+.wl-msg2 { margin-top:min(10px,1.2vh); font-size:clamp(15px,min(1.75vw,2.8vh),22px); letter-spacing:0.16em; color:#e6c977; animation:wlBreathe 2.4s ease-in-out infinite; }
+.wl-msg3 { margin-top:min(12px,1.4vh); max-width:900px; font-size:clamp(12px,min(1.35vw,2.1vh),17px); letter-spacing:0.06em; color:rgba(245,240,232,0.72); }
+.wl-note { position:absolute; bottom:30px; left:40px; font-size:15px; letter-spacing:0.1em; color:rgba(245,240,232,0.72); z-index:2; }
+.wl-lang { position:absolute; bottom:22px; right:40px; display:flex; gap:10px; z-index:3; }
+.wl-lang .ilbtn { font-size:16px; padding:11px 22px; color:rgba(245,240,232,0.85); }
+.wl-lang .ilbtn.active { color:#e6c977; }
+@keyframes wlRing { 0%{transform:scale(1);opacity:.7} 100%{transform:scale(1.18);opacity:0} }
+@keyframes wlBreathe { 0%,100%{opacity:.75} 50%{opacity:1} }
+@keyframes wlTap { 0%,60%,100%{transform:translateY(0) scale(1)} 75%{transform:translateY(3px) scale(.9)} }
+
 </style>
 </head>
 <body>
 
+<!-- WELCOME（受付の入口画面：タッチで会社選択へ） -->
+<div id="s-welcome" class="screen active" data-action="welcome-tap">
+  <div class="wl-bg"></div>
+  <div class="wl-shade"></div>
+  <div class="wl-top">
+    <div class="wl-logos">
+      <img class="wl-logo-2nd" src="assets/logo_2nd.png" alt="2nd Village">
+      <div class="wl-sep"></div>
+      <img class="wl-logo-lux" src="assets/logo_lux.png" alt="LUX TOKYO">
+    </div>
+    <div id="wclock">--:--</div>
+  </div>
+  <div class="wl-center">
+    <div class="wl-sub">RECEPTION</div>
+    <h1 class="wl-title">いらっしゃいませ</h1>
+    <div class="wl-welcome">Welcome　·　欢迎光临</div>
+    <div class="wl-line"></div>
+    <div class="wl-btnwrap">
+      <div class="wl-ring"></div>
+      <button type="button" class="wl-btn">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2"></path><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-5-2.7L4.2 15a1.5 1.5 0 0 1 2.5-1.7L9 16"></path></svg>
+        <span data-i18n="w_btn">受付はこちら</span>
+      </button>
+    </div>
+    <div class="wl-msg1" data-i18n="w_msg1">ご来社の方は、こちらで受付をお願いします</div>
+    <div class="wl-msg2" data-i18n="w_msg2">受付が済むと、スタッフがお迎えにまいります</div>
+    <div class="wl-msg3">Please check in here — our staff will come to greet you　/　请在此办理登记，工作人员将前来迎接</div>
+  </div>
+  <div class="wl-note" data-i18n="concierge">ご不明な点は、コンシェルジュまでお声がけください</div>
+  <div class="wl-lang">
+    <button class="ilbtn active" data-lang="ja">日本語</button>
+    <button class="ilbtn" data-lang="en">EN</button>
+    <button class="ilbtn" data-lang="zh">中文</button>
+  </div>
+</div>
+
 <!-- IDLE（新トップ：背景+時計+会社選択ボタン） -->
-<div id="s-idle" class="screen active">
+<div id="s-idle" class="screen">
   <img class="logo-2nd" src="assets/logo_2nd.png" alt="2nd Village">
   <img class="logo-lux" src="assets/logo_lux.png" alt="LUX TOKYO">
   <div class="idle-lang">
@@ -410,7 +478,7 @@ html,body { width:100%; height:100%; background:var(--bg); color:var(--text); fo
 
 /* ── STATE ── */
 var s = { company:"", purpose:{ja:"",en:"",zh:""} };
-var screen     = "idle";
+var screen     = "welcome";
 var lang       = "ja";
 var idleTimer  = null;
 var waitTimer  = null;
@@ -421,9 +489,9 @@ var WAIT_MS    = 30000;
 
 /* ── I18N ── */
 var T = {
-  ja:{ tap:"受付を開始する", concierge:"ご不明な点は、コンシェルジュまでお声がけください", select_dest:"受付先をお選びください", select_purpose:"ご用件をお選びください", p_interview:"面接", p_meeting:"打ち合わせ", p_delivery:"配達・集荷", p_other:"その他", wait_msg:"係りの者が参りますので<br>少々お待ちください。", wait_skip:"画面をタップしてトップに戻る", back:"戻る", net_err:"⚠ ネットワーク接続を確認してください" },
-  en:{ tap:"Start Check-in", concierge:"For assistance, please speak with our concierge", select_dest:"Please select your destination", select_purpose:"Please select your purpose", p_interview:"Interview", p_meeting:"Meeting", p_delivery:"Delivery / Pickup", p_other:"Other", wait_msg:"A staff member will be with you shortly.<br>Please wait.", wait_skip:"Tap to return to top", back:"Back", net_err:"⚠ Please check your network connection" },
-  zh:{ tap:"开始登记", concierge:"如有疑问，请联系礼宾人员", select_dest:"请选择接待方", select_purpose:"请选择您的来访目的", p_interview:"面试", p_meeting:"商务会谈", p_delivery:"快递·取件", p_other:"其他", wait_msg:"工作人员即将前来接待，<br>请稍候。", wait_skip:"点击屏幕返回首页", back:"返回", net_err:"⚠ 请检查网络连接" }
+  ja:{ w_btn:"受付はこちら", w_msg1:"ご来社の方は、こちらで受付をお願いします", w_msg2:"受付が済むと、スタッフがお迎えにまいります", tap:"受付を開始する", concierge:"ご不明な点は、コンシェルジュまでお声がけください", select_dest:"受付先をお選びください", select_purpose:"ご用件をお選びください", p_interview:"面接", p_meeting:"打ち合わせ", p_delivery:"配達・集荷", p_other:"その他", wait_msg:"係りの者が参りますので<br>少々お待ちください。", wait_skip:"画面をタップしてトップに戻る", back:"戻る", net_err:"⚠ ネットワーク接続を確認してください" },
+  en:{ w_btn:"Check in here", w_msg1:"Visitors, please check in here", w_msg2:"Our staff will come to greet you once you check in", tap:"Start Check-in", concierge:"For assistance, please speak with our concierge", select_dest:"Please select your destination", select_purpose:"Please select your purpose", p_interview:"Interview", p_meeting:"Meeting", p_delivery:"Delivery / Pickup", p_other:"Other", wait_msg:"A staff member will be with you shortly.<br>Please wait.", wait_skip:"Tap to return to top", back:"Back", net_err:"⚠ Please check your network connection" },
+  zh:{ w_btn:"在此登记", w_msg1:"来访的客人请在此办理登记", w_msg2:"登记完成后，工作人员将前来迎接", tap:"开始登记", concierge:"如有疑问，请联系礼宾人员", select_dest:"请选择接待方", select_purpose:"请选择您的来访目的", p_interview:"面试", p_meeting:"商务会谈", p_delivery:"快递·取件", p_other:"其他", wait_msg:"工作人员即将前来接待，<br>请稍候。", wait_skip:"点击屏幕返回首页", back:"返回", net_err:"⚠ 请检查网络连接" }
 };
 function tr(k){ return (T[lang]&&T[lang][k]) || T.ja[k] || k; }
 
@@ -438,7 +506,9 @@ function applyLang(){
 /* ── CLOCK ── */
 function tick(){
   var n=new Date();
-  document.getElementById("clock").textContent = String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
+  var hm = String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
+  document.getElementById("clock").textContent = hm;
+  var wc = document.getElementById("wclock"); if(wc) wc.textContent = hm;
   var d=["日","月","火","水","木","金","土"];
   document.getElementById("date").textContent = n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+d[n.getDay()]+"）";
 }
@@ -450,7 +520,7 @@ function go(id){
   document.getElementById("s-"+id).classList.add("active");
   screen = id;
   clearTimeout(idleTimer);
-  if(id!=="idle") idleTimer = setTimeout(home, IDLE_MS);
+  if(id!=="welcome") idleTimer = setTimeout(home, IDLE_MS);
 }
 
 function home(){
@@ -459,7 +529,7 @@ function home(){
   var bar=document.getElementById("w-bar");
   bar.style.transition="none"; bar.style.width="0%";
   s={ company:"", purpose:{ja:"",en:"",zh:""} };
-  go("idle");
+  go("welcome");
 }
 
 /* ── WAIT ── */
@@ -521,6 +591,7 @@ document.addEventListener("click", function(e){
           s.company="LUX TOKYO"; s.purpose={ja:"",en:"",zh:""}; showWait(); break;
     case "sel-purpose":
       s.purpose={ja:el.dataset.ja, en:el.dataset.en, zh:el.dataset.zh}; showWait(); break;
+    case "welcome-tap": go("idle"); break;
     case "go-company": go("idle"); break;
     case "go-home": clearTimeout(waitTimer); home(); break;
     case "open-admin": openAdmin(); break;
