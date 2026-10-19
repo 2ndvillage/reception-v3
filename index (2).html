@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="受付">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1f3d2c">
+<link rel="manifest" href="manifest.json">
+<title>受付システム V3 – 2nd Village / LUX TOKYO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&family=Cormorant+Garamond:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --bg:       #f0ece3;
+  --surface:  #ffffff;
+  --border:   #d0c8b8;
+  --gold:     #b8892e;
+  --gold-dim: #8a6820;
+  --text:     #1a3528;
+  --text-sub: #5a7a68;
+  --red:      #c0392b;
+  --f-sys:    Georgia, "Times New Roman", serif;
+  --f-serif:  "Noto Serif JP", Georgia, serif;
+  --f-body:   "Noto Sans JP", "Hiragino Sans", sans-serif;
+  --radius:   20px;
+  --tr:       0.2s cubic-bezier(0.4,0,0.2,1);
+}
+html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:var(--f-body); overflow:hidden; -webkit-tap-highlight-color:transparent; }
+
+/* SCREENS */
+.screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity var(--tr); padding:28px 36px; }
+.screen.active { opacity:1; pointer-events:all; }
+.screen:not(.active), .screen:not(.active) * { pointer-events:none !important; }
+
+/* IDLE */
+#s-idle {
+  background-image: url("assets/bg.jpg");
+  background-size: cover;
+  background-position: center;
+  cursor: default;
+  overflow: hidden;
+  display: block;
+  position: fixed;
+}
+/* 縦ゴールドライン */
+#s-idle::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(201,168,76,0.85) 8%, rgba(201,168,76,0.85) 92%, transparent 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+.idle-lang { position:absolute; top:clamp(14px,2.5vh,32px); left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:5; }
+.ilbtn { background:rgba(255,255,255,0.08); border:1px solid rgba(201,168,76,0.35); border-radius:99px; color:rgba(245,240,232,0.6); font-family:var(--f-body); font-size:12px; letter-spacing:0.08em; padding:6px 16px; cursor:pointer; transition:all var(--tr); }
+.ilbtn.active { background:rgba(201,168,76,0.15); border-color:#c9a84c; color:#c9a84c; }
+/* ロゴ：左上・右上固定配置 */
+.logo-2nd { display:none; }
+.logo-lux { display:none; }
+/* RECEPTION ラベル */
+.idle-sub { position:absolute; top:clamp(18px,4vh,52px); left:50%; transform:translateX(-50%); font-family:var(--f-body); font-size:clamp(10px,1.1vw,12px); letter-spacing:0.5em; color:rgba(201,168,76,0.7); text-transform:uppercase; white-space:nowrap; z-index:3; }
+/* タイトル */
+.idle-title { position:absolute; top:clamp(48px,8vh,90px); left:50%; transform:translateX(-50%); font-family:var(--f-serif); font-size:clamp(15px,2vw,24px); font-weight:400; color:rgba(245,240,232,0.92); letter-spacing:0.12em; white-space:nowrap; z-index:3; }
+/* 会社選択ボタン */
+/* 左右エリアに分けてボタン配置 */
+.idle-cards {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  z-index: 2;
+  pointer-events: none;
+}
+.idle-ccard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(20px,3vw,40px);
+  cursor: pointer;
+  pointer-events: all;
+  transition: background 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+.idle-ccard:hover { background: rgba(10,30,20,0.25); }
+.idle-ccard:active { background: rgba(10,30,20,0.40); }
+/* カード内の枠 */
+.idle-ccard-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(28px,4vw,56px) clamp(24px,4vw,56px);
+  background: rgba(10,30,20,0.35);
+  border: 1px solid rgba(201,168,76,0.5);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  min-width: clamp(200px,28vw,340px);
+  min-height: clamp(140px,18vh,220px);
+}
+.idle-ccard:hover .idle-ccard-inner { border-color:#c9a84c; background:rgba(10,30,20,0.52); transform:translateY(-4px); box-shadow:0 8px 32px rgba(201,168,76,0.22); }
+.idle-ccard:active .idle-ccard-inner { transform:scale(0.97); }
+.idle-ccard img { max-width:clamp(180px,26vw,320px); max-height:clamp(100px,14vw,180px); object-fit:contain; pointer-events:none; filter:brightness(0) invert(1); }
+
+.idle-ccard-name { display:none; }
+/* タップ案内 → メイン（廃止のため空定義） */
+.tap-hint {
+  font-family: var(--f-serif);
+  font-size: clamp(22px, 3.2vw, 42px);
+  font-weight: 400;
+  color: #c9a84c;
+  letter-spacing: 0.18em;
+  text-align: center;
+  margin-bottom: 12px;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.tap-arrow {
+  font-size: clamp(18px, 2.5vw, 30px);
+  color: rgba(201,168,76,0.6);
+  margin-bottom: 52px;
+  animation: bounce 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+/* 時計 → サブ情報 */
+#clock { font-family:var(--f-sys); font-size:clamp(32px,4.5vw,56px); font-weight:300; letter-spacing:0.08em; color:rgba(245,240,232,0.45); line-height:1; margin-bottom:6px; }
+#date { font-family:var(--f-body); font-size:clamp(11px,1.2vw,14px); color:rgba(201,168,76,0.35); letter-spacing:0.18em; }
+
+/* HEADER */
+.hbar { display:flex; align-items:center; justify-content:space-between; width:100%; max-width:720px; padding-bottom:32px; }
+.hlogo { font-family:var(--f-sys); font-size:clamp(13px,1.4vw,16px); letter-spacing:0.4em; color:var(--gold); text-transform:uppercase; }
+.lsw { display:flex; gap:8px; }
+.lbtn { background:none; border:1px solid var(--border); color:var(--text-sub); font-family:var(--f-body); font-size:12px; letter-spacing:0.08em; padding:6px 14px; border-radius:99px; cursor:pointer; transition:all var(--tr); }
+.lbtn.active { border-color:var(--gold); color:var(--gold); }
+
+/* BACK */
+.back { position:absolute; top:26px; left:32px; background:none; border:1px solid var(--border); border-radius:99px; color:var(--text-sub); font-family:var(--f-body); font-size:13px; padding:7px 18px; cursor:pointer; transition:all var(--tr); }
+.back:hover { border-color:var(--gold-dim); color:var(--text); }
+
+/* PAGE TITLE */
+.ptitle { font-family:var(--f-serif); font-size:clamp(18px,2.6vw,32px); font-weight:400; letter-spacing:0.08em; color:var(--text); text-align:center; margin-bottom:36px; }
+
+/* COMPANY CARDS */
+#s-company { gap:0; }
+.ccards { display:flex; gap:28px; flex-wrap:wrap; justify-content:center; }
+.ccard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); width:clamp(200px,26vw,300px); padding:40px 24px 32px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; cursor:pointer; transition:all var(--tr); box-shadow:0 2px 16px rgba(26,53,40,0.05); user-select:none; min-height:260px; }
+.ccard:active { transform:scale(0.97); opacity:0.85; }
+.ccard:hover { border-color:var(--gold); box-shadow:0 8px 28px rgba(26,53,40,0.10); transform:translateY(-4px); }
+.ccard img { max-width:180px; max-height:130px; object-fit:contain; pointer-events:none; }
+.lux-card { border-color:rgba(184,137,46,0.35); }
+
+/* PURPOSE GRID */
+#s-purpose { gap:0; }
+.pgrid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; width:100%; max-width:680px; }
+.pbtn { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:32px 16px 24px; display:flex; flex-direction:column; align-items:center; gap:16px; cursor:pointer; transition:all var(--tr); box-shadow:0 2px 12px rgba(26,53,40,0.04); user-select:none; }
+.pbtn:active { transform:scale(0.97); opacity:0.85; }
+.pbtn:hover { border-color:var(--gold); box-shadow:0 6px 22px rgba(26,53,40,0.09); transform:translateY(-3px); }
+.pbtn img { width:clamp(80px,11vw,130px); height:clamp(80px,11vw,130px); object-fit:contain; pointer-events:none; }
+.plabel { font-family:var(--f-serif); font-size:clamp(15px,1.8vw,20px); font-weight:400; color:var(--text); text-align:center; letter-spacing:0.1em; }
+
+/* WAIT */
+#s-wait { gap:20px; }
+.wicon img { width:clamp(80px,11vw,130px); pointer-events:none; }
+.wcompany { font-family:var(--f-sys); font-size:clamp(14px,2vw,24px); font-weight:400; color:var(--gold); letter-spacing:0.25em; text-align:center; }
+.wbadge { background:var(--surface); border:1px solid var(--border); border-radius:99px; padding:6px 20px; font-family:var(--f-serif); font-size:clamp(12px,1.4vw,15px); color:var(--text-sub); letter-spacing:0.1em; }
+.wmsg { font-family:var(--f-serif); font-size:clamp(17px,2.4vw,28px); font-weight:400; color:var(--text); text-align:center; line-height:2; letter-spacing:0.06em; }
+.wprog { width:180px; height:2px; background:var(--border); border-radius:99px; overflow:hidden; }
+.wbar { height:100%; background:var(--gold); width:0; }
+.wskip { background:none; border:1px solid var(--border); border-radius:99px; color:var(--text-sub); font-family:var(--f-body); font-size:12px; letter-spacing:0.1em; padding:7px 22px; cursor:pointer; transition:all var(--tr); }
+.wskip:hover { border-color:var(--text-sub); color:var(--text); }
+
+/* TOAST */
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--red); color:#fff; padding:10px 24px; border-radius:99px; font-family:var(--f-body); font-size:13px; opacity:0; pointer-events:none; transition:opacity 0.3s; z-index:999; white-space:nowrap; }
+#toast.show { opacity:1; }
+
+/* ADMIN */
+#admin-modal { position:fixed; inset:0; background:rgba(10,20,15,0.88); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s; z-index:998; }
+#admin-modal.open { opacity:1; pointer-events:all; }
+.abox { background:#1a3528; border:1px solid #2d5040; border-radius:var(--radius); padding:32px; min-width:320px; display:flex; flex-direction:column; gap:14px; }
+.abox h2 { font-family:var(--f-sys); color:var(--gold); font-size:18px; letter-spacing:0.15em; font-weight:400; }
+.alabel { font-family:var(--f-body); color:#7a9e8a; font-size:11px; display:block; margin-bottom:5px; letter-spacing:0.08em; }
+.ainput { width:100%; background:#1f3d2e; border:1px solid #2d5040; border-radius:8px; color:#f5f0e8; font-family:var(--f-body); font-size:13px; padding:9px 12px; outline:none; }
+.ainput:focus { border-color:var(--gold); }
+.abtns { display:flex; gap:10px; margin-top:4px; }
+.asave { flex:1; background:var(--gold); border:none; border-radius:8px; color:#fff; font-family:var(--f-body); font-size:13px; font-weight:500; padding:11px; cursor:pointer; }
+.acancel { flex:1; background:none; border:1px solid #2d5040; border-radius:8px; color:#7a9e8a; font-family:var(--f-body); font-size:13px; padding:11px; cursor:pointer; }
+.alog { background:#152b20; border-radius:8px; padding:12px; max-height:130px; overflow-y:auto; font-family:var(--f-body); font-size:11px; color:#7a9e8a; line-height:1.7; }
+
+/* 焼き付き防止：時計色アニメのみ */
+/* 輝度ダウン */
+#s-idle.dimmed { filter: brightness(0.25); transition: filter 2s ease; }
+#s-idle { transition: filter 2s ease; }
+/* 背景アニメーション */
+@keyframes bgShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+/* タップカード */
+.tap-card {
+  border: 1px solid rgba(201,168,76,0.6);
+  border-radius: 20px;
+  padding: clamp(24px,3.5vw,44px) clamp(40px,8vw,120px);
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  background: rgba(10,30,20,0.28);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 0 32px rgba(201,168,76,0.15), inset 0 0 32px rgba(0,0,0,0.2);
+  margin-bottom: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.tap-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(201,168,76,0.3);
+  box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  pointer-events: none;
+}
+.touch-icon {
+  width: clamp(60px,7vw,90px);
+  height: clamp(60px,7vw,90px);
+  object-fit: contain;
+  animation: touchPulse 2s ease-in-out infinite;
+}
+@keyframes touchPulse {
+  0%,100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.08); opacity: 1; }
+}
+.tap-main {
+  font-family: var(--f-serif);
+  font-size: clamp(22px,3.2vw,40px);
+  font-weight: 400;
+  color: #c9a84c;
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+.tap-sub {
+  font-family: var(--f-body);
+  font-size: clamp(12px,1.4vw,16px);
+  color: rgba(245,240,232,0.6);
+  letter-spacing: 0.2em;
+}
+/* 下部装飾ライン */
+.date-deco {
+  display: flex; align-items: center; gap: 16px;
+  color: rgba(201,168,76,0.5);
+}
+.date-deco-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent);
+  width: 60px;
+}
+/* コンシェルジュ案内 */
+.concierge-note {
+  position: absolute; bottom: 20px; left: 24px;
+  display: flex; align-items: center; gap: 8px;
+  color: rgba(245,240,232,0.45);
+  font-family: var(--f-body);
+  font-size: clamp(10px,1.1vw,13px);
+  letter-spacing: 0.1em;
+}
+.concierge-note::before {
+  content: 'ⓘ';
+  color: rgba(201,168,76,0.5);
+  font-size: 1.1em;
+}
+
+
+/* 時計の色がゆっくり変化（焼き付き防止） */
+@keyframes clockColorShift {
+  0%   { color: rgba(245,240,232,0.82); text-shadow: 0 0 40px rgba(201,168,76,0.0); }
+  30%  { color: rgba(201,168,76,0.90);  text-shadow: 0 0 60px rgba(201,168,76,0.3); }
+  60%  { color: rgba(245,240,232,0.60); text-shadow: 0 0 20px rgba(201,168,76,0.0); }
+  100% { color: rgba(245,240,232,0.82); text-shadow: 0 0 40px rgba(201,168,76,0.0); }
+}
+#clock {
+  animation: clockColorShift 12s ease-in-out infinite;
+}
+
+/* ── WELCOME（受付の入口画面） ── */
+#s-welcome { display:block; position:fixed; padding:0; overflow:hidden; cursor:pointer; background:#0d1a13; color:#f5f0e8; }
+.wl-bg { position:absolute; inset:0; background:url("assets/bg.jpg") center/cover no-repeat; filter:blur(3px) brightness(0.55); transform:scale(1.04); }
+.wl-shade { position:absolute; inset:0; background:rgba(8,18,12,0.35); }
+.wl-top { position:absolute; top:32px; left:40px; right:40px; display:flex; justify-content:space-between; align-items:center; z-index:2; }
+.wl-logos { display:flex; align-items:center; gap:28px; }
+.wl-logos img { width:auto; filter:brightness(0) invert(1); pointer-events:none; }
+.wl-logo-2nd { height:60px; }
+.wl-logo-lux { height:28px; }
+.wl-sep { width:1px; height:28px; background:rgba(201,168,76,0.5); }
+#wclock { font-family:"Cormorant Garamond", Georgia, serif; font-size:34px; font-weight:300; letter-spacing:0.06em; color:rgba(245,240,232,0.9); }
+.wl-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; text-align:center; padding:min(13vh,110px) 24px min(15vh,120px); box-sizing:border-box; }
+.wl-sub { font-family:"Cormorant Garamond", Georgia, serif; font-size:min(18px,2.3vh); letter-spacing:0.6em; color:#c9a84c; margin-bottom:min(20px,2.4vh); }
+.wl-title { margin:0; font-family:var(--f-serif); font-weight:400; font-size:clamp(40px,min(6.9vw,11vh),88px); letter-spacing:0.14em; color:#f5f0e8; }
+.wl-welcome { margin-top:min(14px,1.6vh); font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(18px,min(2.4vw,3.8vh),30px); letter-spacing:0.2em; color:rgba(245,240,232,0.85); }
+.wl-line { width:220px; height:1px; background:rgba(201,168,76,0.7); margin:min(32px,3.6vh) 0 min(42px,4.8vh); }
+.wl-btnwrap { position:relative; display:flex; align-items:center; justify-content:center; }
+.wl-ring { position:absolute; inset:-10px; border:1px solid #c9a84c; border-radius:999px; animation:wlRing 2.4s ease-out infinite; pointer-events:none; }
+.wl-btn { display:flex; align-items:center; gap:18px; padding:min(28px,3.3vh) 72px; border-radius:999px; border:1px solid #c9a84c; background:rgba(201,168,76,0.16); color:#f5f0e8; font-family:var(--f-serif); font-size:clamp(22px,min(2.7vw,4.3vh),34px); letter-spacing:0.14em; cursor:pointer; }
+.wl-btn svg { animation:wlTap 1.6s ease-in-out infinite; }
+.wl-msg1 { margin-top:min(44px,5vh); font-size:clamp(15px,min(1.75vw,2.8vh),22px); letter-spacing:0.16em; color:rgba(245,240,232,0.92); }
+.wl-msg2 { margin-top:min(10px,1.2vh); font-size:clamp(15px,min(1.75vw,2.8vh),22px); letter-spacing:0.16em; color:#e6c977; animation:wlBreathe 2.4s ease-in-out infinite; }
+.wl-msg3 { margin-top:min(12px,1.4vh); max-width:900px; font-size:clamp(12px,min(1.35vw,2.1vh),17px); letter-spacing:0.06em; color:rgba(245,240,232,0.72); }
+.wl-note { position:absolute; bottom:30px; left:40px; font-size:15px; letter-spacing:0.1em; color:rgba(245,240,232,0.72); z-index:2; }
+.wl-lang { position:absolute; bottom:22px; right:40px; display:flex; gap:10px; z-index:3; }
+.wl-lang .ilbtn { font-size:16px; padding:11px 22px; color:rgba(245,240,232,0.85); }
+.wl-lang .ilbtn.active { color:#e6c977; }
+@keyframes wlRing { 0%{transform:scale(1);opacity:.7} 100%{transform:scale(1.18);opacity:0} }
+@keyframes wlBreathe { 0%,100%{opacity:.75} 50%{opacity:1} }
+@keyframes wlTap { 0%,60%,100%{transform:translateY(0) scale(1)} 75%{transform:translateY(3px) scale(.9)} }
+
+</style>
+</head>
+<body>
+
+<!-- WELCOME（受付の入口画面：タッチで会社選択へ） -->
+<div id="s-welcome" class="screen active" data-action="welcome-tap">
+  <div class="wl-bg"></div>
+  <div class="wl-shade"></div>
+  <div class="wl-top">
+    <div class="wl-logos">
+      <img class="wl-logo-2nd" src="assets/logo_2nd.png" alt="2nd Village">
+      <div class="wl-sep"></div>
+      <img class="wl-logo-lux" src="assets/logo_lux.png" alt="LUX TOKYO">
+    </div>
+    <div id="wclock">--:--</div>
+  </div>
+  <div class="wl-center">
+    <div class="wl-sub">RECEPTION</div>
+    <h1 class="wl-title">いらっしゃいませ</h1>
+    <div class="wl-welcome">Welcome　·　欢迎光临</div>
+    <div class="wl-line"></div>
+    <div class="wl-btnwrap">
+      <div class="wl-ring"></div>
+      <button type="button" class="wl-btn">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V11"></path><path d="M12 10.5V9a1.5 1.5 0 0 1 3 0v2"></path><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.5a6 6 0 0 1-5-2.7L4.2 15a1.5 1.5 0 0 1 2.5-1.7L9 16"></path></svg>
+        <span data-i18n="w_btn">受付はこちら</span>
+      </button>
+    </div>
+    <div class="wl-msg1" data-i18n="w_msg1">ご来社の方は、こちらで受付をお願いします</div>
+    <div class="wl-msg2" data-i18n="w_msg2">受付が済むと、スタッフがお迎えにまいります</div>
+    <div class="wl-msg3">Please check in here — our staff will come to greet you　/　请在此办理登记，工作人员将前来迎接</div>
+  </div>
+  <div class="wl-note" data-i18n="concierge">ご不明な点は、コンシェルジュまでお声がけください</div>
+  <div class="wl-lang">
+    <button class="ilbtn active" data-lang="ja">日本語</button>
+    <button class="ilbtn" data-lang="en">EN</button>
+    <button class="ilbtn" data-lang="zh">中文</button>
+  </div>
+</div>
+
+<!-- IDLE（新トップ：背景+時計+会社選択ボタン） -->
+<div id="s-idle" class="screen">
+  <img class="logo-2nd" src="assets/logo_2nd.png" alt="2nd Village">
+  <img class="logo-lux" src="assets/logo_lux.png" alt="LUX TOKYO">
+  <div class="idle-lang">
+    <button class="ilbtn active" data-lang="ja">日本語</button>
+    <button class="ilbtn" data-lang="en">EN</button>
+    <button class="ilbtn" data-lang="zh">中文</button>
+  </div>
+  <div class="idle-sub" style="position:absolute;top:clamp(60px,9vh,100px);left:50%;transform:translateX(-50%);z-index:3;white-space:nowrap;">Reception</div>
+  <div class="idle-title" data-i18n="select_dest" style="position:absolute;top:clamp(90px,13vh,140px);left:50%;transform:translateX(-50%);z-index:3;white-space:nowrap;">受付先をお選びください</div>
+  <div class="idle-cards">
+    <div class="idle-ccard" data-action="sel-2nd">
+      <div class="idle-ccard-inner">
+        <img src="assets/logo_2nd.png" alt="2nd Village">
+      </div>
+    </div>
+    <div class="idle-ccard" data-action="sel-lux">
+      <div class="idle-ccard-inner">
+        <img src="assets/logo_lux.png" alt="LUX TOKYO">
+      </div>
+    </div>
+  </div>
+  <div id="clock" style="position:absolute;bottom:clamp(60px,10vh,110px);left:50%;transform:translateX(-50%);z-index:3;white-space:nowrap;">--:--</div>
+  <div class="date-deco" style="position:absolute;bottom:clamp(36px,6vh,70px);left:50%;transform:translateX(-50%);z-index:3;white-space:nowrap;">
+    <div class="date-deco-line"></div>
+    <div id="date"></div>
+    <div class="date-deco-line"></div>
+  </div>
+  <div class="concierge-note" data-i18n="concierge" style="z-index:2;">ご不明な点は、コンシェルジュまでお声がけください</div>
+  <!-- 隠し管理ボタン：右下角60x60px透明 -->
+  <div id="admin-secret-btn" style="position:absolute;bottom:0;right:0;width:60px;height:60px;z-index:999;cursor:pointer;" data-action="open-admin"></div>
+</div>
+
+<!-- COMPANY -->
+<div id="s-company" class="screen">
+  <div class="hbar">
+    <div class="hlogo">Reception</div>
+    <div class="lsw">
+      <button class="lbtn active" data-lang="ja">日本語</button>
+      <button class="lbtn" data-lang="en">EN</button>
+      <button class="lbtn" data-lang="zh">中文</button>
+    </div>
+  </div>
+  <div class="ptitle" data-i18n="select_dest">受付先をお選びください</div>
+  <div class="ccards">
+    <div class="ccard" data-action="sel-2nd">
+      <img src="assets/extra_0.png" alt="2nd Village">
+    </div>
+    <div class="ccard lux-card" data-action="sel-lux">
+      <img src="assets/extra_1.png" alt="LUX TOKYO">
+    </div>
+  </div>
+</div>
+
+<!-- PURPOSE -->
+<div id="s-purpose" class="screen">
+  <button class="back" data-action="go-company">← <span data-i18n="back">戻る</span></button>
+  <div class="hbar">
+    <div class="hlogo">Reception</div>
+    <div class="lsw">
+      <button class="lbtn active" data-lang="ja">日本語</button>
+      <button class="lbtn" data-lang="en">EN</button>
+      <button class="lbtn" data-lang="zh">中文</button>
+    </div>
+  </div>
+  <div class="ptitle" data-i18n="select_purpose">ご用件をお選びください</div>
+  <div class="pgrid">
+    <div class="pbtn" data-action="sel-purpose" data-ja="面接" data-en="Interview" data-zh="面试">
+      <img src="assets/icon_interview.png" alt="">
+      <div class="plabel" data-i18n="p_interview">面接</div>
+    </div>
+    <div class="pbtn" data-action="sel-purpose" data-ja="打ち合わせ" data-en="Meeting" data-zh="商務会談">
+      <img src="assets/icon_meeting.png" alt="">
+      <div class="plabel" data-i18n="p_meeting">打ち合わせ</div>
+    </div>
+    <div class="pbtn" data-action="sel-purpose" data-ja="配達・集荷" data-en="Delivery / Pickup" data-zh="快递·取件">
+      <img src="assets/icon_delivery.png" alt="">
+      <div class="plabel" data-i18n="p_delivery">配達・集荷</div>
+    </div>
+    <div class="pbtn" data-action="sel-purpose" data-ja="その他" data-en="Other" data-zh="其他">
+      <img src="assets/icon_other.png" alt="">
+      <div class="plabel" data-i18n="p_other">その他</div>
+    </div>
+  </div>
+</div>
+
+<!-- WAIT -->
+<div id="s-wait" class="screen">
+  <div class="wicon"><img src="assets/icon_complete.png" alt=""></div>
+  <div class="wcompany" id="w-company"></div>
+  <div class="wbadge" id="w-badge" style="display:none"></div>
+  <div class="wmsg" data-i18n="wait_msg">係りの者が参りますので<br>少々お待ちください。</div>
+  <div class="wprog"><div class="wbar" id="w-bar"></div></div>
+  <button class="wskip" data-action="go-home" data-i18n="wait_skip">画面をタップしてトップに戻る</button>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ADMIN -->
+<div id="admin-modal">
+  <div class="abox">
+    <h2>⚙ 管理設定</h2>
+    <div class="abtns">
+      <button class="acancel" data-action="admin-close">閉じる</button>
+    </div>
+    <div class="alog" id="alog">— 送信ログ —</div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ── STATE ── */
+var s = { company:"", purpose:{ja:"",en:"",zh:""} };
+var screen     = "welcome";
+var lang       = "ja";
+var idleTimer  = null;
+var waitTimer  = null;
+var aTaps      = 0;
+var aTapTimer  = null;
+var IDLE_MS    = 60000;
+var WAIT_MS    = 30000;
+
+/* ── I18N ── */
+var T = {
+  ja:{ w_btn:"受付はこちら", w_msg1:"ご来社の方は、こちらで受付をお願いします", w_msg2:"受付が済むと、スタッフがお迎えにまいります", tap:"受付を開始する", concierge:"ご不明な点は、コンシェルジュまでお声がけください", select_dest:"受付先をお選びください", select_purpose:"ご用件をお選びください", p_interview:"面接", p_meeting:"打ち合わせ", p_delivery:"配達・集荷", p_other:"その他", wait_msg:"係りの者が参りますので<br>少々お待ちください。", wait_skip:"画面をタップしてトップに戻る", back:"戻る", net_err:"⚠ ネットワーク接続を確認してください" },
+  en:{ w_btn:"Check in here", w_msg1:"Visitors, please check in here", w_msg2:"Our staff will come to greet you once you check in", tap:"Start Check-in", concierge:"For assistance, please speak with our concierge", select_dest:"Please select your destination", select_purpose:"Please select your purpose", p_interview:"Interview", p_meeting:"Meeting", p_delivery:"Delivery / Pickup", p_other:"Other", wait_msg:"A staff member will be with you shortly.<br>Please wait.", wait_skip:"Tap to return to top", back:"Back", net_err:"⚠ Please check your network connection" },
+  zh:{ w_btn:"在此登记", w_msg1:"来访的客人请在此办理登记", w_msg2:"登记完成后，工作人员将前来迎接", tap:"开始登记", concierge:"如有疑问，请联系礼宾人员", select_dest:"请选择接待方", select_purpose:"请选择您的来访目的", p_interview:"面试", p_meeting:"商务会谈", p_delivery:"快递·取件", p_other:"其他", wait_msg:"工作人员即将前来接待，<br>请稍候。", wait_skip:"点击屏幕返回首页", back:"返回", net_err:"⚠ 请检查网络连接" }
+};
+function tr(k){ return (T[lang]&&T[lang][k]) || T.ja[k] || k; }
+
+function applyLang(){
+  document.querySelectorAll("[data-i18n]").forEach(function(el){ el.innerHTML = tr(el.dataset.i18n); });
+  document.querySelectorAll("[data-lang]").forEach(function(b){ b.classList.toggle("active", b.dataset.lang===lang); });
+  /* 待機中の用件バッジも更新 */
+  var badge = document.getElementById("w-badge");
+  if(badge && s.purpose[lang]) badge.textContent = s.purpose[lang];
+}
+
+/* ── CLOCK ── */
+function tick(){
+  var n=new Date();
+  var hm = String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
+  document.getElementById("clock").textContent = hm;
+  var wc = document.getElementById("wclock"); if(wc) wc.textContent = hm;
+  var d=["日","月","火","水","木","金","土"];
+  document.getElementById("date").textContent = n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+d[n.getDay()]+"）";
+}
+tick(); setInterval(tick,10000);
+
+/* ── SCREEN ── */
+function go(id){
+  document.querySelectorAll(".screen").forEach(function(el){ el.classList.remove("active"); });
+  document.getElementById("s-"+id).classList.add("active");
+  screen = id;
+  clearTimeout(idleTimer);
+  if(id!=="welcome") idleTimer = setTimeout(home, IDLE_MS);
+}
+
+function home(){
+  clearTimeout(waitTimer);
+  clearTimeout(idleTimer);
+  var bar=document.getElementById("w-bar");
+  bar.style.transition="none"; bar.style.width="0%";
+  s={ company:"", purpose:{ja:"",en:"",zh:""} };
+  go("welcome");
+}
+
+/* ── WAIT ── */
+function showWait(){
+  document.getElementById("w-company").textContent = s.company;
+  var badge=document.getElementById("w-badge");
+  var lbl = s.purpose[lang]||s.purpose.ja;
+  if(lbl){ badge.textContent=lbl; badge.style.display="block"; }
+  else { badge.style.display="none"; }
+  go("wait");
+  try { new Audio(s.company==="LUX TOKYO" ? "assets/announce.mp3" : "assets/announce_ja.mp3").play().catch(function(){}); } catch(e){}
+  sendWebhook();
+  var bar=document.getElementById("w-bar");
+  bar.style.transition="none"; bar.style.width="0%";
+  setTimeout(function(){ bar.style.transition="width "+WAIT_MS+"ms linear"; bar.style.width="100%"; },60);
+  clearTimeout(waitTimer);
+  waitTimer = setTimeout(home, WAIT_MS);
+}
+
+/* ── WEBHOOK ── */
+function sendWebhook(){
+  var ts = new Date().toLocaleString("ja-JP");
+  log("["+ts+"] "+s.company+(s.purpose.ja?" / "+s.purpose.ja:"")+" → 送信中...");
+  fetch("/api/notify",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({company:s.company, purpose:s.purpose.ja||""})
+  })
+    .then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(d){
+        if(r.ok && d.ok){ log("✅ 送信成功"); }
+        else { log("❌ "+r.status+" "+(d.status?("(Chat "+d.status+") "):"")+(d.error||"")); showToast(); }
+      });
+    })
+    .catch(function(e){ log("❌ "+e.message); showToast(); });
+}
+
+/* ── EVENT DELEGATION ── */
+document.addEventListener("click", function(e){
+  /* 言語ボタン（data-langを持つ要素） */
+  var lb = e.target.closest("[data-lang]");
+  if(lb){ lang=lb.dataset.lang; applyLang(); return; }
+
+  /* アクションボタン（data-actionを持つ要素） */
+  var el = e.target.closest("[data-action]");
+  if(!el) return;
+  var act = el.dataset.action;
+
+  switch(act){
+    case "idle-tap":
+      aTaps++;
+      clearTimeout(aTapTimer);
+      aTapTimer=setTimeout(function(){ aTaps=0; },2000);
+      if(aTaps>=5){ aTaps=0; openAdmin(); return; }
+      go("company"); break;
+    case "sel-2nd":
+      s.company="2nd Village"; s.purpose={ja:"",en:"",zh:""}; go("purpose"); break;
+    case "sel-lux":
+          s.company="LUX TOKYO"; s.purpose={ja:"",en:"",zh:""}; showWait(); break;
+    case "sel-purpose":
+      s.purpose={ja:el.dataset.ja, en:el.dataset.en, zh:el.dataset.zh}; showWait(); break;
+    case "welcome-tap": go("idle"); break;
+    case "go-company": go("idle"); break;
+    case "go-home": clearTimeout(waitTimer); home(); break;
+    case "open-admin": openAdmin(); break;
+    case "admin-close": closeAdmin(); break;
+  }
+});
+
+/* ── アイドル画面：長押し3秒→管理画面（ボタン以外の領域） ── */
+(function(){
+  var idleEl = document.getElementById("s-idle");
+  var pressTimer = null;
+  var pressing = false;
+
+  function startPress(e){
+    if(e.target.closest("[data-lang]") || e.target.closest(".idle-ccard")) return;
+    pressing = true;
+    pressTimer = setTimeout(function(){
+      if(pressing){ pressing=false; openAdmin(); }
+    }, 3000);
+  }
+  function endPress(e){
+    if(!pressing) return;
+    clearTimeout(pressTimer);
+    pressing = false;
+  }
+  function cancelPress(){
+    pressing = false;
+    clearTimeout(pressTimer);
+  }
+
+  idleEl.addEventListener("mousedown", startPress);
+  idleEl.addEventListener("touchstart", startPress, {passive:true});
+  idleEl.addEventListener("mouseup", endPress);
+  idleEl.addEventListener("touchend", endPress);
+  idleEl.addEventListener("mouseleave", cancelPress);
+  idleEl.addEventListener("touchcancel", cancelPress);
+})();
+
+/* ── ADMIN ── */
+function openAdmin(){
+  document.getElementById("admin-modal").classList.add("open");
+}
+function closeAdmin(){ document.getElementById("admin-modal").classList.remove("open"); }
+function log(m){ var l=document.getElementById("alog"); l.innerHTML+=m+"<br>"; l.scrollTop=l.scrollHeight; }
+function showToast(){ var el=document.getElementById("toast"); el.textContent=tr("net_err"); el.classList.add("show"); setTimeout(function(){ el.classList.remove("show"); },4000); }
+
+
+/* ── ベル音（Web Audio API）── */
+function playBell(){
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    /* 倍音を重ねて上品なベル音を生成 */
+    var freqs = [523.25, 1046.5, 1568, 2093]; /* C5, C6, G6, C7 */
+    var gains = [0.5, 0.3, 0.15, 0.08];
+    freqs.forEach(function(freq, i){
+      var osc  = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(gains[i], ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 2.5);
+    });
+  } catch(e){ console.log('Bell error:', e); }
+}
+
+
+/* ── 音声読み上げ（Web Speech API）── */
+
+/* ── 焼き付き防止 ── */
+(function(){
+  var DIM_MS    = 99 * 60 * 1000; /* 輝度ダウン無効 */
+  var MOVE_MS   = 99 * 60 * 1000; /* 時計移動無効 */
+  var dimTimer  = null;
+  var moveTimer = null;
+
+  /* 時計ラッパー：位置移動なし */
+
+  function moveClockRandom(){ /* 無効化 */ }
+
+  /* 輝度ダウン無効化 */
+  function dimScreen(){ /* disabled */ }
+  function undimScreen(){ resetBurninTimers(); }
+
+  function resetBurninTimers(){
+    clearTimeout(dimTimer);
+    clearTimeout(moveTimer);
+    if(document.getElementById('s-idle').classList.contains('active')){
+      dimTimer  = setTimeout(dimScreen, DIM_MS);
+      moveTimer = setInterval(moveClockRandom, MOVE_MS);
+    }
+  }
+
+  /* アイドル画面に戻った時にタイマー開始 */
+  var origHome = home;
+  home = function(){
+    origHome();
+    setTimeout(function(){
+      clearInterval(moveTimer);
+      resetBurninTimers();
+    }, 100);
+  };
+
+  /* タップで明るさ復帰 */
+  document.getElementById('s-idle').addEventListener('touchstart', undimScreen, {passive:true});
+  document.getElementById('s-idle').addEventListener('mousedown', undimScreen);
+
+  /* 初期化 */
+  resetBurninTimers();
+})();
+
+/* ── INIT ── */
+applyLang();
+
+})();
+</script>
+</body>
+</html>
